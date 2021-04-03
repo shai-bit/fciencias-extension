@@ -33,6 +33,46 @@ function getFirstName(name) {
   return firstName;
 }
 
+function removeSpecialChars(name) {
+  let removed = name
+    .normalize('NFD')
+    .replace(
+      /([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+/gi,
+      '$1'
+    )
+    .normalize();
+  return removed;
+}
+
+function getLastNameRegex(name, unicode) {
+  let removed = removeSpecialChars(name);
+  let arrAccent = unicode.split(' ');
+  let arrRemoved = removed.split(' ');
+  let optionalName =
+    '(' +
+    arrAccent[0] +
+    '|' +
+    arrAccent[0].toLowerCase() +
+    '|' +
+    arrRemoved[0] +
+    '|' +
+    arrRemoved[0].toLowerCase() +
+    '|' +
+    arrRemoved[0].toUpperCase() +
+    ')[^}]*(' +
+    arrAccent[1] +
+    '|' +
+    arrAccent[1].toLowerCase() +
+    '|' +
+    arrRemoved[1] +
+    '|' +
+    arrRemoved[1].toLowerCase() +
+    '|' +
+    arrRemoved[1].toLowerCase() +
+    ')';
+  return optionalName;
+}
+
 function transformSpecialChars(strings) {
   var specialChars = [225, 233, 237, 243, 250, 193, 201, 205, 211, 218, 241];
   var unicode = [];
@@ -72,11 +112,20 @@ function fetchProfessorsInfo(firstNames, lastNames) {
         let regExString =
           '\\{[^}]*(' +
           firstUnicode[i] +
-          ')[^}]*(' +
-          lastUnicode[i] +
-          ').*?\\}';
+          '|' +
+          firstUnicode[i].toLowerCase() +
+          '|' +
+          removeSpecialChars(firstNames[i]) +
+          '|' +
+          removeSpecialChars(firstNames[i]).toLowerCase() +
+          '|' +
+          removeSpecialChars(firstNames[i]).toUpperCase() +
+          ')[^}]*' +
+          getLastNameRegex(lastNames[i], lastUnicode[i]) +
+          '.*?\\}';
         let regEx = new RegExp(regExString);
         console.log(regEx);
+        // Try searching with regex
         if (regEx.test(template)) {
           let result = template.match(regEx);
           console.log(result[0]);
