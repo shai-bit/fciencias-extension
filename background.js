@@ -1,16 +1,17 @@
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'loading') {
     if (
-      /https:\/\/web\.fciencias\.unam\.mx\/docencia\/horarios\/202[0-9][0-9]/.test(
+      /https?:\/\/w(w|e)(w|b)\.fciencias\.unam\.mx\/docencia\/horarios\/202[0-9][0-9]/.test(
         changeInfo.url
       )
     ) {
-      chrome.tabs.executeScript(null, { file: './content.js' });
+      chrome.tabs.executeScript(null, { file: './foreground.js' });
     }
   }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log(sender);
   firstNames = [];
   lastNames = [];
   for (professor of request.msg) {
@@ -18,7 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     lastNames.push(getLastName(professor));
   }
   console.log(firstNames, lastNames);
-  fetchProfessorsInfo(firstNames, lastNames);
+  fetchProfessorsInfo(firstNames, lastNames, sender.tab.id);
 });
 
 function getLastName(name) {
@@ -33,6 +34,7 @@ function getFirstName(name) {
   return firstName;
 }
 
+//Doesnt replace ñ
 function removeSpecialChars(name) {
   let removed = name
     .normalize('NFD')
@@ -92,7 +94,7 @@ function transformSpecialChars(strings) {
   return unicode;
 }
 
-function fetchProfessorsInfo(firstNames, lastNames) {
+function fetchProfessorsInfo(firstNames, lastNames, tabid) {
   fetch('https://www.misprofesores.com/escuelas/Facultad-de-Ciencias-UNAM_2842')
     .then(function (response) {
       switch (response.status) {
@@ -108,6 +110,7 @@ function fetchProfessorsInfo(firstNames, lastNames) {
       firstUnicode = transformSpecialChars(firstNames);
       lastUnicode = transformSpecialChars(lastNames);
       console.log(firstUnicode, lastUnicode);
+      profInfo = [];
       for (i = 0; i < firstUnicode.length; i++) {
         let regExString =
           '\\{[^}]*(' +
@@ -131,8 +134,14 @@ function fetchProfessorsInfo(firstNames, lastNames) {
           console.log(result[0]);
           profObject = JSON.parse(result[0]);
           console.log(profObject);
+          profInfo.push(profObject);
+        } else {
+          profInfo.push(null);
         }
       }
+      console.log(profInfo);
+      chrome.tabs.sendMessage(tabid, { professors: profInfo });
+      chrome.tabs.insertCSS(null, { file: './styles.css' });
     })
     .catch(function (response) {
       // "Not Found"
