@@ -1,5 +1,5 @@
 {
-  "name": "Fciencias misprofesores",
+  "name": "FCiencias x MisProfesores",
   "description": "Ve las calificaciones de tus profesores directamente desde la página de la facultad.",
   "version": "1.0",
   "manifest_version": 2,
@@ -20,5 +20,13 @@
     "http://www.fciencias.unam.mx/*",
     "https://web.fciencias.unam.mx/*",
     "https://www.misprofesores.com/escuelas/Facultad-de-Ciencias-UNAM_2842"
-  ]
+  ],
+  "icons": {
+    "16": "./logos/logofciencias16.png",
+    "48": "./logos/logofciencias48.png",
+    "128": "./logos/logofciencias128.png"
+  },
+  "browser_action": {
+    "default_icon": "./logos/logofciencias48.png"
+  }
 }
